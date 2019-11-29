@@ -11,6 +11,7 @@ import org.htmlcleaner.DomSerializer;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.jsoup.Connection;
+import org.jsoup.Connection.Response;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,12 +130,18 @@ public class MagnetService {
                 .header(HttpHeaders.HOST, host)
                 .header(HttpHeaders.ACCEPT_LANGUAGE, "zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7,und;q=0.6,ja;q=0.5,la;q=0.4");
         //增加userAgent
-        String userAgentHeader = StringUtils.isEmpty(userAgent) ? "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36" : userAgent;
+        String userAgentHeader = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36";
         connect.header(HttpHeaders.USER_AGENT, userAgentHeader);
 
         //代理设置
         if (config.proxyEnabled && isProxy) {
-            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyHost, config.proxyPort));
+        	Proxy.Type proxyType = Proxy.Type.HTTP;
+        	try {
+				proxyType = Proxy.Type.valueOf(config.proxyType);
+			} catch (Exception e) {
+				logger.error("解析proxyType错误");
+			}
+            Proxy proxy = new Proxy(proxyType, new InetSocketAddress(config.proxyHost, config.proxyPort));
             connect.proxy(proxy);
         }
 
@@ -163,6 +170,21 @@ public class MagnetService {
         TagNode node = new HtmlCleaner().clean(html);
         return new DomSerializer(new CleanerProperties()).createDOM(node);
     }
+    public static void main(String[] args) throws IOException {
+		String uri = "https://kickasstorrents.to/usearch/rct/1";
+		Connection connect = Jsoup.connect(uri)
+				.ignoreContentType(true)
+                .sslSocketFactory(DefaultSslSocketFactory.getDefaultSslSocketFactory())
+                .timeout(15000)
+                .header(HttpHeaders.HOST, "kickasstorrents.to")
+                .header(HttpHeaders.ACCEPT_LANGUAGE, "zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7,und;q=0.6,ja;q=0.5,la;q=0.4");
+		String userAgentHeader = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36";
+        connect.header(HttpHeaders.USER_AGENT, userAgentHeader);
+		Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 10808));
+        connect.proxy(proxy);
+       Response resp = connect.execute();
+       System.out.println(resp.body());;
+	}
 
     public String formatSiteUrl(MagnetRule rule, String keyword, String sort, int page) {
         if (StringUtils.isEmpty(keyword)) {
@@ -376,7 +398,7 @@ public class MagnetService {
                 e.printStackTrace();
                 newMagnet = url;
             }
-            return String.format("magnet:?xt=urn:btih:%s", newMagnet);
+            return String.format("magnet:?xt=urn:btih:%s", newMagnet).toLowerCase();
         }
     }
 

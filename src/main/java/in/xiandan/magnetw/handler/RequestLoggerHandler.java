@@ -18,6 +18,7 @@ public class RequestLoggerHandler {
         try {
             StringBuffer sb = new StringBuffer();
             sb.append(request.getRequestURL());
+            sb.append("\nRemoteAddr: "+request.getRemoteAddr());
             if (HttpMethod.GET.name().equals(request.getMethod())) {
                 if (!StringUtils.isEmpty(request.getQueryString())) {
                     sb.append("?" + URLDecoder.decode(request.getQueryString()));

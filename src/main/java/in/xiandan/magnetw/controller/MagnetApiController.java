@@ -96,6 +96,7 @@ public class MagnetApiController {
         List<MagnetItem> infos = new ArrayList<MagnetItem>();
         infos.addAll(magnetService.parser(rule, pageOption.getKeyword(), pageOption.getSort(), pageOption.getPage(), userAgent));
         int dataCount = infos.size();
+        logger.info("搜索引擎："+source+", 关键字："+keyword);
 
         //是否需要屏蔽结果
         String supplement = "";

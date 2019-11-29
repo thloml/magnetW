@@ -7,6 +7,8 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -14,7 +16,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -194,6 +198,19 @@ public class MagnetRuleService {
     private List<String> loadTrackers() {
         String url = config.trackersUrl;
         RestTemplate rest = new RestTemplate();
+        if(config.proxyEnabled) {
+        	SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        	Proxy.Type proxyType = Proxy.Type.HTTP;
+        	try {
+				proxyType = Proxy.Type.valueOf(config.proxyType);
+			} catch (Exception e) {
+				logger.error("解析proxyType错误");
+			}
+            Proxy proxy = new Proxy(proxyType, new InetSocketAddress(config.proxyHost, config.proxyPort));
+        	factory.setProxy(proxy);
+        	rest.setRequestFactory(factory);
+        }
+        
         ResponseEntity<String> response = rest.exchange(url, HttpMethod.GET, null, String.class);
         String body = response.getBody();
         String[] split = body.split("\n\n");

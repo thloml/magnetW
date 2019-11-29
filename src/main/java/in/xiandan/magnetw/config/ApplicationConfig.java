@@ -37,6 +37,9 @@ public class ApplicationConfig {
 
     @Value("${proxy.enabled}")
     public boolean proxyEnabled;
+    
+    @Value("${proxy.type}")
+    public String proxyType;
 
     @Value("${proxy.host}")
     public String proxyHost;
